@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" width="581" height="240">
+	<mx:Script>
+		<![CDATA[
+			
+			import mx.core.UIComponent;
+			
+			private var nc:NetConnection = new NetConnection();
+			private var ns:NetStream;
+			private var video:Video;
+			private var videoHolder:UIComponent;
+			
+			public function onBWDone(... args):void 
+		    {
+		        //ignore onBWDone
+		    }
+			
+			private function init():void
+			{
+		    	nc.client = this;
+		        // Соединяем камеру с элементом VideoDisplay
+		        //vd.attachCamera(Camera.getCamera());
+		        // Добавляем обработчики событий для объекта NetConnection
+		        nc.addEventListener(NetStatusEvent.NET_STATUS, onNCStatus);
+		        nc.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+		        nc.addEventListener(AsyncErrorEvent.ASYNC_ERROR, asyncErrorHandler);
+		        // Для RED5
+		        nc.objectEncoding = ObjectEncoding.AMF0;
+		        // Соединяемся с медиа-сервером
+		        
+		        nc.connect(rtmp.text + '/' + app.text, true);
+			}
+			
+			private function onNCStatus(event:NetStatusEvent):void
+		    {
+		        switch (event.info.code) {
+		            // При успешном соединении
+		            case "NetConnection.Connect.Success":
+		                // Создаём стрим на основе объекта соединения
+		                ns = new NetStream(nc);
+		                // Добавляем обработчики событий чтобы не ругался
+		                ns.addEventListener(AsyncErrorEvent.ASYNC_ERROR, asyncErrorHandler);
+		                ns.addEventListener(NetStatusEvent.NET_STATUS, onNCStatus);
+		                // Соединяем стрим с вебкамерой
+		                //ns.attachCamera(Camera.getCamera());
+		                // Запускаем передачу данных
+		                trace('OK');
+						video = new Video(320, 240); 
+						video.attachNetStream(ns); 
+	                	ns.play(stream.text);
+	                	videoHolder = new UIComponent();
+	                	videoHolder.addChild(video); 
+		                cnvWebCam.addChild(videoHolder); 
+		                
+		                break;
+		        }   
+		    } 
+			
+			private function securityErrorHandler(event:SecurityErrorEvent):void
+		    {
+		    	
+		    }
+		
+		    private function asyncErrorHandler(event:AsyncErrorEvent):void
+		    {
+		    	
+		    }
+		]]>
+	</mx:Script>
+	<mx:Canvas x="0" y="0" height="240" width="320" visible="true" id="cnvWebCam" /> 
+	
+	<mx:TextInput x="328" y="10" width="241" text="rtmp://ishowu.ru" id="rtmp"/>
+	<mx:TextInput x="328" y="40" width="241" text="oflaDemo" id="app"/>
+	<mx:TextInput x="328" y="70" width="241" id="stream" text="ishowu-xmpp-red5"/>
+	<mx:Button x="328" y="100" label="ОК" width="241" click="init()"/>
+	
+</mx:WindowedApplication>
